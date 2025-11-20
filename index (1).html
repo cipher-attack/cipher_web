@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIPHER | ULTIMATE COMMAND</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- 1. NEXT-GEN VARIABLES --- */
+        :root {
+            --bg-deep: #030305;
+            --glass: rgba(20, 20, 25, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --neon-cyan: #00f3ff;
+            --neon-purple: #bc13fe;
+            --neon-green: #0aff60;
+            --text-primary: #ffffff;
+            --text-sec: #a0a0a0;
+            --font-tech: 'JetBrains Mono', monospace;
+            --font-ui: 'Rajdhani', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; scrollbar-width: thin; }
+        
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; background: #000; }
+        ::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 10px; }
+
+        /* --- 2. ANIMATED BACKGROUND (CANVAS LAYER) --- */
+        #particle-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; pointer-events: none;
+            background: radial-gradient(circle at 50% 50%, #111119 0%, #000000 100%);
+        }
+
+        /* --- 3. HUD HEADER --- */
+        header {
+            position: fixed; top: 0; width: 100%; z-index: 1000;
+            background: rgba(3, 3, 5, 0.8); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 10px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        
+        .brand-box { display: flex; align-items: center; gap: 15px; }
+        .logo { font-family: var(--font-tech); font-size: 2rem; font-weight: 700; letter-spacing: -1px; color: #fff; text-shadow: 0 0 15px var(--neon-cyan); }
+        .logo span { color: var(--neon-cyan); }
+        
+        .hud-stats {
+            display: flex; gap: 30px; font-family: var(--font-tech); font-size: 0.75rem; color: var(--neon-green);
+        }
+        .stat-item { display: flex; flex-direction: column; align-items: center; }
+        .stat-val { font-weight: bold; color: #fff; font-size: 0.9rem; }
+
+        /* --- 4. DASHBOARD LAYOUT --- */
+        .dashboard {
+            max-width: 1600px; margin: 100px auto 40px; padding: 0 30px;
+            display: grid; grid-template-columns: 280px 1fr 350px; gap: 30px;
+        }
+
+        /* GLASS PANELS */
+        .panel {
+            background: var(--glass); border: 1px solid var(--glass-border);
+            border-radius: 12px; padding: 20px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            position: relative; overflow: hidden;
+        }
+        /* Glowing corners */
+        .panel::before { content:''; position:absolute; top:0; left:0; width:100%; height:2px; background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent); opacity: 0.5; }
+
+        /* --- LEFT SIDEBAR (MENU & MAP) --- */
+        .sidebar-left { display: flex; flex-direction: column; gap: 20px; }
+        
+        .menu-btn {
+            width: 100%; padding: 15px; margin-bottom: 10px;
+            background: transparent; border: 1px solid var(--glass-border);
+            color: var(--text-sec); font-family: var(--font-tech); cursor: pointer;
+            text-align: left; transition: 0.3s; display: flex; align-items: center; gap: 10px;
+        }
+        .menu-btn:hover, .menu-btn.active {
+            background: rgba(0, 243, 255, 0.1); border-color: var(--neon-cyan); color: #fff; box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+        }
+
+        /* SIMULATED MAP */
+        .cyber-map {
+            height: 200px; background: url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg') no-repeat center;
+            background-size: contain; opacity: 0.6; position: relative;
+            filter: invert(1) sepia(1) saturate(5) hue-rotate(180deg);
+        }
+        .ping {
+            position: absolute; width: 8px; height: 8px; background: var(--neon-purple); border-radius: 50%;
+            box-shadow: 0 0 10px var(--neon-purple);
+            animation: ripple 2s infinite;
+        }
+        @keyframes ripple { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(4); opacity: 0; } }
+
+        /* --- CENTER (NEWS FEED) --- */
+        .feed-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .section-title { font-size: 1.5rem; font-weight: 600; letter-spacing: 1px; }
+        
+        .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+
+        .card {
+            background: rgba(10, 10, 15, 0.6); border: 1px solid #333; border-radius: 8px; overflow: hidden;
+            transition: 0.4s; display: flex; flex-direction: column;
+        }
+        .card:hover {
+            transform: translateY(-5px) scale(1.02);
+            border-color: var(--neon-green);
+            box-shadow: 0 0 25px rgba(10, 255, 96, 0.15);
+        }
+        
+        .card-img-box { height: 180px; position: relative; overflow: hidden; }
+        .card-img-box img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; filter: brightness(0.8) contrast(1.2); }
+        .card:hover .card-img-box img { transform: scale(1.1); filter: brightness(1); }
+        
+        .card-badge {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(0,0,0,0.8); color: var(--neon-cyan); border: 1px solid var(--neon-cyan);
+            padding: 4px 10px; font-size: 0.7rem; font-weight: bold; font-family: var(--font-tech);
+        }
+
+        .card-body { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+        .card h3 { font-size: 1.1rem; margin-bottom: 10px; line-height: 1.4; }
+        .card-meta { font-size: 0.8rem; color: var(--text-sec); margin-bottom: 15px; display: flex; justify-content: space-between; }
+        
+        .btn-glow {
+            margin-top: auto; padding: 10px; text-align: center;
+            background: linear-gradient(90deg, transparent, rgba(0, 243, 255, 0.1), transparent);
+            border: 1px solid var(--glass-border); color: var(--neon-cyan);
+            text-decoration: none; font-family: var(--font-tech); font-size: 0.8rem; transition: 0.3s;
+        }
+        .btn-glow:hover { background: var(--neon-cyan); color: #000; box-shadow: 0 0 20px var(--neon-cyan); }
+
+        /* --- RIGHT SIDEBAR (STATS & TOOLS) --- */
+        .chart-box { height: 150px; display: flex; align-items: flex-end; gap: 10px; padding-top: 20px; }
+        .bar { width: 100%; background: #333; transition: height 1s; position: relative; }
+        .bar:hover { background: var(--neon-purple); box-shadow: 0 0 15px var(--neon-purple); }
+
+        .voice-box {
+            text-align: center; padding: 20px; border: 1px solid var(--neon-green); border-radius: 8px;
+            background: rgba(10, 255, 96, 0.05); margin-top: 20px; cursor: pointer; transition: 0.3s;
+        }
+        .voice-box:hover { background: rgba(10, 255, 96, 0.1); }
+        .mic-icon { font-size: 2rem; color: var(--neon-green); margin-bottom: 10px; }
+        .pulse { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(10, 255, 96, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(10, 255, 96, 0); } 100% { box-shadow: 0 0 0 0 rgba(10, 255, 96, 0); } }
+
+        /* LOADER */
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:2000; display:flex; justify-content:center; align-items:center; flex-direction:column; }
+        .scanner { width: 300px; height: 2px; background: #333; position: relative; overflow: hidden; margin-top: 20px;}
+        .scanner::after { content:''; position:absolute; top:0; left:0; height:100%; width:50%; background: var(--neon-cyan); animation: scan 1s infinite ease-in-out; }
+        @keyframes scan { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
+
+        @media (max-width: 1200px) { .dashboard { grid-template-columns: 1fr; } .sidebar-left, .sidebar-right { display: none; } } 
+    </style>
+</head>
+<body>
+
+    <canvas id="particle-canvas"></canvas>
+
+    <div id="loader">
+        <h1 style="font-family: 'JetBrains Mono'; color: var(--neon-cyan); letter-spacing: 5px;">INITIALIZING CIPHER...</h1>
+        <div class="scanner"></div>
+    </div>
+
+    <header>
+        <div class="brand-box">
+            <div class="logo">CIPHER<span>.X</span></div>
+            <div style="padding: 5px 10px; border: 1px solid var(--neon-green); color: var(--neon-green); font-size: 0.7rem; font-family: var(--font-tech);">SYSTEM ONLINE</div>
+        </div>
+        
+        <div class="hud-stats">
+            <div class="stat-item">
+                <span>CPU LOAD</span>
+                <span class="stat-val" id="cpu-stat">12%</span>
+            </div>
+            <div class="stat-item">
+                <span>NET LATENCY</span>
+                <span class="stat-val">24ms</span>
+            </div>
+            <div class="stat-item">
+                <span>THREATS BLOCKED</span>
+                <span class="stat-val">8,402</span>
+            </div>
+            <div class="stat-item">
+                <span>TIME (UTC)</span>
+                <span class="stat-val" id="utc-time">00:00</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard">
+        
+        <aside class="sidebar-left">
+            <div class="panel">
+                <div class="cyber-map" id="cyberMap">
+                    </div>
+                <div style="margin-top:10px; font-size:0.8rem; color:var(--text-sec); text-align:center; font-family:var(--font-tech);">
+                    LIVE ATTACK SIMULATION
+                </div>
+            </div>
+
+            <div class="panel">
+                <h4 style="color:#fff; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;">MODULES</h4>
+                <button class="menu-btn active" onclick="filterNews('all')"><i class="fas fa-globe"></i> GLOBAL FEED</button>
+                <button class="menu-btn" onclick="filterNews('malware')"><i class="fas fa-bug"></i> MALWARE INTEL</button>
+                <button class="menu-btn" onclick="filterNews('crypto')"><i class="fas fa-bitcoin"></i> CRYPTO WATCH</button>
+                <button class="menu-btn" onclick="filterNews('ai')"><i class="fas fa-brain"></i> AI SECURITY</button>
+            </div>
+        </aside>
+
+        <main>
+            <div class="feed-header">
+                <div class="section-title">INTELLIGENCE FEED</div>
+                <input type="text" id="search" placeholder="Search Database..." style="background:rgba(0,0,0,0.5); border:1px solid #444; color:#fff; padding:10px 20px; border-radius:20px; font-family:var(--font-tech); outline:none;">
+            </div>
+            <div class="news-grid" id="grid">
+                </div>
+        </main>
+
+        <aside class="sidebar-right">
+            
+            <div class="panel voice-box" id="voiceBtn" onclick="activateVoice()">
+                <i class="fas fa-microphone mic-icon"></i>
+                <h3 style="color:var(--neon-green)">VOICE COMMAND</h3>
+                <p style="font-size:0.8rem; color:#aaa; margin-top:5px;">Tap & Say "Scroll Down"</p>
+            </div>
+
+            <div class="panel" style="margin-top:30px;">
+                <h4 style="color:#fff; margin-bottom:10px;">THREAT ANALYTICS</h4>
+                <div class="chart-box">
+                    <div class="bar" style="height:40%; background:var(--neon-cyan);" title="Mobile"></div>
+                    <div class="bar" style="height:80%; background:var(--neon-purple);" title="Ransomware"></div>
+                    <div class="bar" style="height:60%; background:var(--neon-green);" title="Phishing"></div>
+                    <div class="bar" style="height:30%; background:#fff;" title="IoT"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#777; margin-top:5px; font-family:var(--font-tech);">
+                    <span>MOB</span><span>RAN</span><span>PHI</span><span>IoT</span>
+                </div>
+            </div>
+
+            <div class="panel" style="margin-top:30px;">
+                <h4 style="color:#fff; margin-bottom:10px;">BOOKMARKS</h4>
+                <ul id="bookmarkList" style="list-style:none; font-size:0.85rem; color:var(--text-sec);">
+                    <li>No secure data saved.</li>
+                </ul>
+            </div>
+        </aside>
+
+    </div>
+
+    <script>
+        // --- 1. ADVANCED CONFIGURATION ---
+        const RSS_URL = 'https://feeds.feedburner.com/TheHackersNews';
+        const API = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(RSS_URL)}`;
+        let globalData = [];
+
+        // --- 2. CANVAS PARTICLE SYSTEM (Background) ---
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.size = Math.random() * 2;
+                this.color = Math.random() > 0.5 ? '#00f3ff' : '#bc13fe'; // Neon colors
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                if(this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if(this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            }
+            draw() {
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color; ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            for(let i=0; i<80; i++) particles.push(new Particle());
+            animateParticles();
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, index) => {
+                p.update(); p.draw();
+                // Draw connections
+                for(let j=index; j<particles.length; j++) {
+                    const dx = p.x - particles[j].x;
+                    const dy = p.y - particles[j].y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if(dist < 100) {
+                        ctx.beginPath(); ctx.strokeStyle = `rgba(100,100,255, ${1 - dist/100})`;
+                        ctx.lineWidth = 0.2; ctx.moveTo(p.x, p.y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke();
+                    }
+                }
+            });
+            requestAnimationFrame(animateParticles);
+        }
+
+        // --- 3. NEWS ENGINE (Smart Image + Fetch) ---
+        // Reusing the robust logic from previous iteration but adapting for new UI
+        const IMG_KEYWORDS = {
+            'android': 'https://images.unsplash.com/photo-1607252650355-f7fd0460ccdb?w=600&q=80',
+            'apple': 'https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=600&q=80',
+            'crypto': 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=600&q=80',
+            'ai': 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&q=80',
+            'malware': 'https://images.unsplash.com/photo-1563206767-5b1d97299337?w=600&q=80',
+            'hack': 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&q=80'
+        };
+        const FALLBACKS = [
+            'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&q=80',
+            'https://images.unsplash.com/photo-1510915228340-29c85a43dcfe?w=600&q=80'
+        ];
+
+        async function initApp() {
+            initParticles();
+            startClock();
+            startMapSim();
+            
+            try {
+                const res = await fetch(API);
+                const data = await res.json();
+                if(data.status === 'ok') {
+                    globalData = data.items;
+                    renderGrid(globalData);
+                    setTimeout(() => document.getElementById('loader').style.display='none', 1500);
+                }
+            } catch(e) {
+                console.error("Offline Mode");
+                document.getElementById('loader').innerHTML = "<h2 style='color:red'>OFFLINE</h2>";
+            }
+        }
+
+        function getSmartImage(item) {
+            if(item.thumbnail && item.thumbnail.length > 10) return item.thumbnail;
+            const contentImg = (item.content || item.description).match(/<img[^>]+src="([^">]+)"/);
+            if(contentImg) return contentImg[1];
+            
+            const t = item.title.toLowerCase();
+            for(let k in IMG_KEYWORDS) if(t.includes(k)) return IMG_KEYWORDS[k];
+            
+            return FALLBACKS[t.length % FALLBACKS.length];
+        }
+
+        function renderGrid(items) {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            items.forEach(item => {
+                const img = getSmartImage(item);
+                let badge = "INTEL";
+                if(item.title.toLowerCase().includes('malware')) badge = "THREAT";
+                if(item.title.toLowerCase().includes('ai')) badge = "AI";
+
+                const card = `
+                    <article class="card">
+                        <div class="card-img-box">
+                            <img src="${img}" alt="news">
+                            <div class="card-badge">${badge}</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-meta">
+                                <span>${new Date(item.pubDate).toLocaleDateString()}</span>
+                                <span><i class="fas fa-eye"></i> ${Math.floor(Math.random()*5000)}</span>
+                            </div>
+                            <h3>${item.title}</h3>
+                            <a href="${item.link}" target="_blank" class="btn-glow">SECURE ACCESS >></a>
+                        </div>
+                    </article>
+                `;
+                grid.innerHTML += card;
+            });
+        }
+
+        // --- 4. VOICE COMMAND (EXPERIMENTAL) ---
+        function activateVoice() {
+            const btn = document.getElementById('voiceBtn');
+            btn.classList.add('pulse');
+            
+            if ('webkitSpeechRecognition' in window) {
+                const recognition = new webkitSpeechRecognition();
+                recognition.lang = 'en-US';
+                recognition.start();
+
+                recognition.onresult = function(event) {
+                    const command = event.results[0][0].transcript.toLowerCase();
+                    alert("Command Recieved: " + command);
+                    if(command.includes('scroll')) window.scrollBy(0, 500);
+                    if(command.includes('reload')) location.reload();
+                    btn.classList.remove('pulse');
+                };
+                recognition.onerror = () => { alert("Voice Error"); btn.classList.remove('pulse'); };
+            } else {
+                alert("Voice API not supported in this browser.");
+                btn.classList.remove('pulse');
+            }
+        }
+
+        // --- 5. SIMULATIONS (Map & Clock) ---
+        function startMapSim() {
+            const map = document.getElementById('cyberMap');
+            setInterval(() => {
+                const ping = document.createElement('div');
+                ping.className = 'ping';
+                ping.style.left = Math.random() * 100 + '%';
+                ping.style.top = Math.random() * 80 + '%';
+                map.appendChild(ping);
+                setTimeout(() => ping.remove(), 2000);
+            }, 800);
+            
+            // CPU Fluctuations
+            setInterval(() => {
+                document.getElementById('cpu-stat').innerText = Math.floor(Math.random() * 30 + 10) + "%";
+            }, 2000);
+        }
+
+        function startClock() {
+            setInterval(() => {
+                const now = new Date();
+                document.getElementById('utc-time').innerText = now.getUTCHours().toString().padStart(2,'0') + ":" + now.getUTCMinutes().toString().padStart(2,'0');
+            }, 1000);
+        }
+
+        // --- 6. FILTERING ---
+        function filterNews(cat) {
+            if(cat === 'all') renderGrid(globalData);
+            else renderGrid(globalData.filter(i => i.title.toLowerCase().includes(cat)));
+        }
+        
+        // Search
+        document.getElementById('search').addEventListener('keyup', (e) => {
+            const val = e.target.value.toLowerCase();
+            renderGrid(globalData.filter(i => i.title.toLowerCase().includes(val)));
+        });
+
+        initApp();
+    </script>
+</body>
+</html>
