@@ -53,7 +53,7 @@ This dashboard is designed to simulate a **Security Operations Center (SOC)** en
 run this project on your computer
 1.  Clone the repo:
     ```sh
-    git clone [https://github.com/cipher-attack/cipher_web.git](https://github.com/cipher-attack/cipher_web.git)
+    git clone [https://github.com/cipher-attack/cipher_web.git]
     ```
 2.  Open `index.html` in your browser.
 
